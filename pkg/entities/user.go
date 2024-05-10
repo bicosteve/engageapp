@@ -24,18 +24,17 @@ type Claims struct {
 	Email string `json:"email"`
 }
 
-func Validate(payload UserPayload) error {
-
+func Validate(payload *UserPayload) error {
 	if payload.Email == "" {
-		return errors.New("email address is required ")
+		return errors.New("email address is required")
 	}
 
 	if payload.Password == "" {
-		return errors.New("password is required ")
+		return errors.New("password is required")
 	}
 
 	if payload.ConfirmPassword == "" {
-		return errors.New("confirm password is required ")
+		return errors.New("confirm password is required")
 	}
 
 	if payload.ConfirmPassword != payload.Password {
