@@ -30,8 +30,14 @@ func (b *Base) RunBroker() {
 	b.Router.Use(middleware.Heartbeat("/ping-broker"))
 
 	log.Printf("Running broker service on port %s ... \n", port)
-	err := http.ListenAndServe(port, b.Router)
+	srv := &http.Server{
+		Addr:    port,
+		Handler: b.Router,
+	}
 
+	// err := http.ListenAndServe(port, b.Router)
+
+	err := srv.ListenAndServe()
 	if err != nil {
 		log.Printf("Error %s", err)
 		os.Exit(1)
