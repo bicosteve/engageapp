@@ -11,8 +11,7 @@ import (
 
 type JSONResponse utils.JSONResponse
 
-// Contains the broke
-
+// Broker() -> Broker handle
 func (b *Base) Broker(w http.ResponseWriter, r *http.Request) {
 	payload := JSONResponse{
 		Error:   false,
@@ -28,6 +27,7 @@ func (b *Base) Broker(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// PostUser() -> checks user request body and validates it
 func (b *Base) PostUser(w http.ResponseWriter, r *http.Request) {
 	userRequestBody := new(entities.UserPayload)
 
