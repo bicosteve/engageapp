@@ -1,7 +1,11 @@
 package main
 
-import "fmt"
+import (
+	"github.com/engageapp/pkg/controllers"
+)
 
 func main() {
-	fmt.Println("This is auth")
+	var base controllers.Base
+
+	base.RunAuth()
 }
