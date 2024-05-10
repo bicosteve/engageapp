@@ -53,3 +53,28 @@ func (b *Base) PostUser(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSON(w, http.StatusCreated, map[string]string{"msg": "User Created!"})
 
 }
+
+func (b *Base) Login(w http.ResponseWriter, r *http.Request) {
+	payload := new(entities.UserPayload)
+
+	err := utils.ReadJSON(w, r, payload)
+	if err != nil {
+		utils.ErrorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	err = entities.ValidateLogin(payload)
+	if err != nil {
+		utils.ErrorJSON(w, err, http.StatusBadRequest)
+		return
+
+	}
+
+	token, err := b.UserModel.LoginUser(payload, b.DB)
+	if err != nil {
+		utils.ErrorJSON(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusAccepted, map[string]string{"token": token})
+}

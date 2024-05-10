@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"time"
+	"unicode/utf8"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -19,7 +20,7 @@ type User struct {
 type UserPayload struct {
 	Email           string `json:"email"`
 	Password        string `json:"password"`
-	ConfirmPassword string `json:"confirm_password"`
+	ConfirmPassword string `json:"confirm_password,omitempty"`
 }
 
 type UserModel struct {
@@ -30,6 +31,10 @@ type Claims struct {
 	ID    string `json:"id"`
 	Email string `json:"email"`
 }
+
+var errMap = make(map[string]string)
+
+// var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
 func Validate(payload *UserPayload) error {
 	if payload.Email == "" {
@@ -44,8 +49,22 @@ func Validate(payload *UserPayload) error {
 		return errors.New("confirm password is required")
 	}
 
-	if payload.ConfirmPassword != payload.Password {
-		return errors.New("confirm password must match password")
+	if utf8.RuneCountInString(payload.ConfirmPassword) != utf8.RuneCountInString(payload.Password) {
+		return errors.New("confirm password is required")
+
+	}
+
+	return nil
+
+}
+
+func ValidateLogin(payload *UserPayload) error {
+	if payload.Email == "" {
+		return errors.New("email address is required")
+	}
+
+	if payload.Password == "" {
+		return errors.New("password is required")
 	}
 
 	return nil

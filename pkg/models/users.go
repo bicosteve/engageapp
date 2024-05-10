@@ -3,10 +3,11 @@ package models
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/engageapp/pkg/entities"
-	"github.com/engageapp/pkg/utils"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserModel struct{}
@@ -29,10 +30,41 @@ func (um *UserModel) RegisterUser(user *entities.UserPayload, db *sql.DB) error 
 	_, err = db.ExecContext(ctx, q, data...)
 
 	if err != nil {
-		utils.Log("ERROR", "usermdl", err.Error())
 		return err
 	}
 
 	return nil
 
+}
+
+func (um *UserModel) LoginUser(user *entities.UserPayload, db *sql.DB) (string, error) {
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	var dbUser entities.User
+
+	q := `SELECT * FROM user WHERE email = ? LIMIT 1`
+	row := db.QueryRowContext(ctx, q, user.Email)
+	err := row.Scan(
+		&dbUser.ID,
+		&dbUser.Email,
+		&dbUser.Password,
+		&dbUser.CreatedAt,
+		&dbUser.UpdatedAt,
+	)
+
+	if err != nil {
+		return "", err
+	}
+
+	requestPassword := []byte(user.Password)
+	hashedPassword := []byte(dbUser.Password)
+
+	err = bcrypt.CompareHashAndPassword(hashedPassword, requestPassword)
+	if err != nil {
+		return "", errors.New("password and email do not match")
+	}
+
+	return "there", nil
 }

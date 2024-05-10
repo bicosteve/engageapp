@@ -64,6 +64,7 @@ func (b *Base) RunAuth() {
 
 	// Routes
 	b.Router.Post("/register", b.PostUser)
+	b.Router.Post("/login", b.Login)
 
 	err := srv.ListenAndServe()
 	if err != nil {
