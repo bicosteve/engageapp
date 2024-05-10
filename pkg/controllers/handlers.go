@@ -44,6 +44,12 @@ func (b *Base) PostUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = b.UserModel.RegisterUser(userRequestBody, b.DB)
+	if err != nil {
+		utils.ErrorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
 	utils.WriteJSON(w, http.StatusCreated, map[string]string{"msg": "User Created!"})
 
 }

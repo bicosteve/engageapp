@@ -1,8 +1,11 @@
 package entities
 
 import (
+	"database/sql"
 	"errors"
 	"time"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
@@ -17,6 +20,10 @@ type UserPayload struct {
 	Email           string `json:"email"`
 	Password        string `json:"password"`
 	ConfirmPassword string `json:"confirm_password"`
+}
+
+type UserModel struct {
+	DB *sql.DB
 }
 
 type Claims struct {
@@ -42,4 +49,15 @@ func Validate(payload *UserPayload) error {
 	}
 
 	return nil
+}
+
+func HashPassword(payload *UserPayload) (string, error) {
+
+	bytes, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
+
+	if err != nil {
+		return "", errors.New("could not generate password hash")
+	}
+
+	return string(bytes), nil
 }
