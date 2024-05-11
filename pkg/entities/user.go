@@ -1,11 +1,15 @@
 package entities
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"database/sql"
 	"errors"
 	"time"
 	"unicode/utf8"
 
+	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -30,9 +34,8 @@ type UserModel struct {
 type Claims struct {
 	ID    string `json:"id"`
 	Email string `json:"email"`
+	jwt.RegisteredClaims
 }
-
-var errMap = make(map[string]string)
 
 // var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
@@ -58,7 +61,7 @@ func Validate(payload *UserPayload) error {
 
 }
 
-func ValidateLogin(payload *UserPayload) error {
+func ValidateLogins(payload *UserPayload) error {
 	if payload.Email == "" {
 		return errors.New("email address is required")
 	}
@@ -79,4 +82,25 @@ func HashPassword(payload *UserPayload) (string, error) {
 	}
 
 	return string(bytes), nil
+}
+
+func GenerateAuthToken(user *User) (string, error) {
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return "", err
+	}
+	claims := &Claims{
+		ID:    user.ID,
+		Email: user.Email,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
+	tokenString, err := token.SignedString(key)
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
 }

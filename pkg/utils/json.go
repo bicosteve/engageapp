@@ -7,8 +7,6 @@ import (
 	"net/http"
 )
 
-type Helper struct{}
-
 // Contains JSON helpers
 type JSONResponse struct {
 	Error   bool        `json:"error"`
@@ -83,4 +81,9 @@ func ErrorJSON(w http.ResponseWriter, err error, status ...int) error {
 
 	return WriteJSON(w, statusCode, payload)
 
+}
+
+func GenerateAccessToken() (string, error) {
+
+	return "", nil
 }

@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/engageapp/pkg/entities"
+	"github.com/go-sql-driver/mysql"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -30,6 +32,13 @@ func (um *UserModel) RegisterUser(user *entities.UserPayload, db *sql.DB) error 
 	_, err = db.ExecContext(ctx, q, data...)
 
 	if err != nil {
+		mysqlErr, ok := err.(*mysql.MySQLError)
+		if mysqlErr.Number == 1062 && strings.Contains(mysqlErr.Message, "Duplicate entry") {
+			return errors.New("email already in use")
+		}
+
+		_ = ok
+
 		return err
 	}
 
@@ -66,5 +75,10 @@ func (um *UserModel) LoginUser(user *entities.UserPayload, db *sql.DB) (string, 
 		return "", errors.New("password and email do not match")
 	}
 
-	return "there", nil
+	token, err := entities.GenerateAuthToken(&dbUser)
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
 }

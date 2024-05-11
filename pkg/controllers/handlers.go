@@ -63,7 +63,7 @@ func (b *Base) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = entities.ValidateLogin(payload)
+	err = entities.ValidateLogins(payload)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return

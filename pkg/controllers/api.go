@@ -5,15 +5,10 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/engageapp/pkg/utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 )
-
-type Helper struct {
-	*utils.Helper
-}
 
 // Will contain the code that handles api endpoints
 
