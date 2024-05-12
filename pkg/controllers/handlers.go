@@ -50,6 +50,12 @@ func (b *Base) PostUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// err = utils.PublishToQueue(b.Chan, "Test", userRequestBody)
+	// if err != nil {
+	// 	utils.ErrorJSON(w, err, http.StatusInternalServerError)
+	// 	return
+	// }
+
 	utils.WriteJSON(w, http.StatusCreated, map[string]string{"msg": "User Created!"})
 
 }
