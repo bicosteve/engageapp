@@ -50,11 +50,11 @@ func (b *Base) PostUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// err = utils.PublishToQueue(b.Chan, "Test", userRequestBody)
-	// if err != nil {
-	// 	utils.ErrorJSON(w, err, http.StatusInternalServerError)
-	// 	return
-	// }
+	err = utils.PublishToQueue(b.Chan, "Test", userRequestBody)
+	if err != nil {
+		utils.ErrorJSON(w, err, http.StatusInternalServerError)
+		return
+	}
 
 	utils.WriteJSON(w, http.StatusCreated, map[string]string{"msg": "User Created!"})
 
@@ -77,6 +77,12 @@ func (b *Base) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	token, err := b.UserModel.LoginUser(payload, b.DB)
+	if err != nil {
+		utils.ErrorJSON(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	err = utils.PublishToQueue(b.Chan, "Test", token)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusInternalServerError)
 		return

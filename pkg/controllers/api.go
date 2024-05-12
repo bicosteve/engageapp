@@ -19,12 +19,12 @@ func (b *Base) RunBroker() {
 
 	b.Router = chi.NewRouter()
 
+	// set cors for chi
 	setCors(b.Router)
 
 	// Check if the broker works
 	b.Router.Use(middleware.Heartbeat("/ping-broker"))
 
-	// Routes
 	b.Router.Post("/broker", b.Broker)
 
 	log.Printf("Running broker service on port %s ... \n", port)
@@ -57,7 +57,6 @@ func (b *Base) RunAuth() {
 		Handler: b.Router,
 	}
 
-	// Routes
 	b.Router.Post("/register", b.PostUser)
 	b.Router.Post("/login", b.Login)
 
@@ -66,6 +65,7 @@ func (b *Base) RunAuth() {
 		log.Printf("Error %s ", err)
 		os.Exit(2)
 	}
+
 }
 
 func setCors(r *chi.Mux) {

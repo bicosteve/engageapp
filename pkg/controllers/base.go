@@ -37,11 +37,9 @@ func (b *Base) Init() {
 	utils.Log("INFO", "app", "connection done in %v", time.Since(startTime))
 
 	b.RabbitMQ = utils.ConnectQueue()
-	// defer b.RabbitMQ.Close()
+	//defer b.RabbitMQ.Close()
 
 	b.Chan = utils.CreateChannel(b.RabbitMQ)
-	// defer b.Chan.Close()
-
-	utils.Consume(b.Chan, "Test")
+	//defer b.Chan.Close()
 
 }
