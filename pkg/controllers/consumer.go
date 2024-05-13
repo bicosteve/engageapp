@@ -7,7 +7,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-// Contains the code for RabbitMQ producer
+// Contains the code for RabbitMQ Consumer
 func (b *Base) Consume(c *amqp.Channel, queueName string) {
 	messages, err := c.Consume(
 		queueName, // queue name

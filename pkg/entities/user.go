@@ -4,8 +4,10 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/x509"
 	"database/sql"
 	"errors"
+	"net/http"
 	"time"
 	"unicode/utf8"
 
@@ -93,7 +95,9 @@ func GenerateAuthToken(user *User) (string, error) {
 		ID:    user.ID,
 		Email: user.Email,
 		RegisteredClaims: jwt.RegisteredClaims{
+			Issuer:    "authservice",
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
 
@@ -103,4 +107,44 @@ func GenerateAuthToken(user *User) (string, error) {
 		return "", err
 	}
 	return tokenString, nil
+}
+
+// func GetToken(r *http.Request) (string, error) {
+// 	cookie, err := r.Cookie("token")
+// 	if err != nil {
+// 		if err == http.ErrNoCookie {
+// 			return "", errors.New("there is no cookie set")
+// 		}
+
+// 		return "", err
+// 	}
+
+// 	tokenStr := cookie.Value
+// 	return tokenStr, nil
+
+// }
+
+func ValidateClaims(claims *Claims, r *http.Request) (*Claims, error) {
+	key, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	derBuf, _ := x509.MarshalECPrivateKey(key)
+	// privKey, _ := x509.ParseECPrivateKey(derBuf)
+
+	c, err := r.Cookie("token")
+	if err != nil {
+		return &Claims{}, err
+	}
+
+	tkn, err := jwt.ParseWithClaims(c.Value, claims, func(t *jwt.Token) (interface{}, error) {
+		return []byte(derBuf), nil
+	})
+
+	if err != nil {
+		return &Claims{}, err
+	}
+
+	if !tkn.Valid {
+		return &Claims{}, nil
+	}
+
+	return claims, nil
 }

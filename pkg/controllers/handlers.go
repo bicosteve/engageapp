@@ -4,6 +4,7 @@ package controllers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/engageapp/pkg/entities"
 	"github.com/engageapp/pkg/utils"
@@ -88,5 +89,17 @@ func (b *Base) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusAccepted, map[string]string{"token": token})
+	cookie := &http.Cookie{
+		Name:     "token",
+		Value:    token,
+		Path:     "/",
+		SameSite: 4,
+		Secure:   true,
+		Expires:  time.Now().Add(time.Hour * 24),
+	}
+
+	http.SetCookie(w, cookie)
+	r.AddCookie(cookie)
+
+	// utils.WriteJSON(w, http.StatusAccepted, map[string]string{"token": token})
 }
