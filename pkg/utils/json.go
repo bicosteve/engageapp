@@ -3,18 +3,10 @@ package utils
 import (
 	"encoding/json"
 	"errors"
+	"github.com/engageapp/pkg/entities"
 	"io"
 	"net/http"
 )
-
-type Helper struct{}
-
-// Contains JSON helpers
-type JSONResponse struct {
-	Error   bool        `json:"error"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
-}
 
 // ReadJSON -> helper function for reading json from client
 // Takes json, decodes for error.
@@ -44,7 +36,9 @@ func ReadJSON(w http.ResponseWriter, r *http.Request, data interface{}) error {
 // WriteJSON -> helper for writing json to  client
 // Marshal's data
 // Sets header content type
-func WriteJSON(w http.ResponseWriter, status int, data interface{}, headers ...http.Header) error {
+func WriteJSON(
+	w http.ResponseWriter, status int, data interface{}, headers ...http.Header,
+) error {
 	toSee, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -76,11 +70,16 @@ func ErrorJSON(w http.ResponseWriter, err error, status ...int) error {
 		statusCode = status[0]
 	}
 
-	var payload JSONResponse
+	var payload entities.JSONResponse
 
 	payload.Error = true
 	payload.Message = err.Error()
 
 	return WriteJSON(w, statusCode, payload)
 
+}
+
+func GenerateAccessToken() (string, error) {
+
+	return "", nil
 }

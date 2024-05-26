@@ -1,7 +1,20 @@
 package main
 
-import "fmt"
+import (
+	"github.com/engageapp/pkg/controllers"
+	"github.com/engageapp/pkg/utils"
+	"github.com/joho/godotenv"
+)
 
 func main() {
-	fmt.Println("This is auth")
+	err := godotenv.Load("../../.env")
+	if err != nil {
+		utils.Log("ERR", "logs", "Error loading logs because of %v", err)
+	}
+
+	var base controllers.Base
+
+	base.Init()
+	base.RunAuth()
+	base.Consume(base.Chan, "Test")
 }
