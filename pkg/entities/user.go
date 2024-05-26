@@ -5,7 +5,6 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/x509"
-	"database/sql"
 	"errors"
 	"net/http"
 	"time"
@@ -29,9 +28,9 @@ type UserPayload struct {
 	ConfirmPassword string `json:"confirm_password,omitempty"`
 }
 
-type UserModel struct {
-	DB *sql.DB
-}
+//type UserModel struct {
+//	DB *sql.DB
+//}
 
 type Claims struct {
 	ID    string `json:"id"`
