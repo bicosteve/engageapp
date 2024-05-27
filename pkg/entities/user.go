@@ -40,7 +40,7 @@ type Claims struct {
 
 // var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
-func Validate(payload *UserPayload) error {
+func ValidateUser(payload *UserPayload) error {
 	if payload.Email == "" {
 		return errors.New("email address is required")
 	}
@@ -107,21 +107,6 @@ func GenerateAuthToken(user *User) (string, error) {
 	}
 	return tokenString, nil
 }
-
-// func GetToken(r *http.Request) (string, error) {
-// 	cookie, err := r.Cookie("token")
-// 	if err != nil {
-// 		if err == http.ErrNoCookie {
-// 			return "", errors.New("there is no cookie set")
-// 		}
-
-// 		return "", err
-// 	}
-
-// 	tokenStr := cookie.Value
-// 	return tokenStr, nil
-
-// }
 
 func ValidateClaims(claims *Claims, r *http.Request) (*Claims, error) {
 	key, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)

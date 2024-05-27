@@ -1,16 +1,26 @@
 package entities
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 type Post struct {
-	id        int       `json:"id"`
-	message   string    `json:"message"`
-	createdAt time.Time `json:"createdAt"`
-	updateAt  time.Time `json:"updateAt"`
-	userId    int       `json:"userId"`
+	ID        int       `json:"id"`
+	Message   string    `json:"message"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdateAt  time.Time `json:"updateAt"`
+	UserId    int       `json:"userId"`
 }
 
 type PostPayload struct {
-	message string `json:"message"`
-	userId  int    `json:"userId"`
+	Message string `json:"message"`
+}
+
+func ValidatePost(post *PostPayload) error {
+	if post.Message == "" {
+		return errors.New("message is required")
+	}
+
+	return nil
 }

@@ -10,11 +10,9 @@ import (
 	"github.com/engageapp/pkg/utils"
 )
 
-type JSONResponse utils.JSONResponse
-
 // Broker() -> Broker handle
 func (b *Base) Broker(w http.ResponseWriter, r *http.Request) {
-	payload := JSONResponse{
+	payload := entities.JSONResponse{
 		Error:   false,
 		Message: "Hit Broker",
 	}
@@ -39,7 +37,7 @@ func (b *Base) PostUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate the payload
-	err = entities.Validate(userRequestBody)
+	err = entities.ValidateUser(userRequestBody)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
