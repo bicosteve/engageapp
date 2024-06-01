@@ -13,6 +13,8 @@ type Post struct {
 	UserId    int       `json:"userId"`
 }
 
+type PostModel struct{}
+
 type PostPayload struct {
 	Message string `json:"message"`
 }

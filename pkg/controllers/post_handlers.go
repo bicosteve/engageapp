@@ -1,21 +1,25 @@
 package controllers
 
 import (
-	"github.com/engageapp/pkg/entities"
-	"github.com/engageapp/pkg/utils"
+	"fmt"
 	"net/http"
 	"strconv"
+
+	"github.com/engageapp/pkg/entities"
+	"github.com/engageapp/pkg/utils"
 )
 
 func (b *Base) CreatePost(w http.ResponseWriter, r *http.Request) {
-	var payload entities.PostPayload
-	err := utils.ReadJSON(w, r, payload)
+	var payload *entities.PostPayload
+	err := utils.ReadJSON(w, r, &payload)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 
-	err = entities.ValidatePost(&payload)
+	fmt.Println(payload)
+
+	err = entities.ValidatePost(payload)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
@@ -33,6 +37,14 @@ func (b *Base) CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = userId
+	fmt.Println(userId)
+
+	err = b.PostModel.CreatePost(payload, userId, b.DB)
+	if err != nil {
+		utils.ErrorJSON(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	utils.WriteJSON(w, http.StatusOK, map[string]string{"msg": "Post Created"})
 
 }

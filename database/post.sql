@@ -3,6 +3,7 @@ CREATE TABLE `post`(
     `message` VARCHAR(500) NOT NULL,
     `created_at` DATETIME DEFAULT  CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  	`user_id` INT NOT NULL, 
     PRIMARY KEY (`post_id`),
     FOREIGN KEY(`user_id`) REFERENCES user(`user_id`)
 )ENGINE = InnoDB AUTO_INCREMENT = 1 DEFAULT CHARSET = utf8;

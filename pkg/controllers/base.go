@@ -19,6 +19,7 @@ type Base struct {
 	UserModel *models.UserModel
 	RabbitMQ  *amqp.Connection
 	Chan      *amqp.Channel
+	PostModel *models.PostModel
 }
 
 func (b *Base) Init() {

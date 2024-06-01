@@ -12,7 +12,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UserModel struct{}
+type UserModel entities.UserModel
 
 func (um *UserModel) RegisterUser(
 	user *entities.UserPayload, db *sql.DB,

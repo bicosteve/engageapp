@@ -7,6 +7,7 @@ import (
 )
 
 func main() {
+
 	err := godotenv.Load(".env")
 	if err != nil {
 		utils.Log("ERR", "logs", "Error loading logs because of %v", err)
@@ -15,6 +16,6 @@ func main() {
 	var base controllers.Base
 
 	base.Init()
-	base.RunAuth()
-	// base.Consume(base.Chan, "Test")
+	base.RunPost()
+
 }
