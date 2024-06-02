@@ -1,9 +1,7 @@
 package controllers
 
 import (
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/engageapp/pkg/entities"
 	"github.com/engageapp/pkg/utils"
@@ -17,27 +15,25 @@ func (b *Base) CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Println(payload)
-
 	err = entities.ValidatePost(payload)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 
-	claims, err := entities.ValidateClaims(&entities.Claims{}, r)
+	userId, err := entities.ValidateClaims(r)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 
-	userId, err := strconv.Atoi(claims.ID)
-	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusBadRequest)
-		return
-	}
+	// userId, err := strconv.Atoi(claims.ID)
+	// if err != nil {
+	// 	utils.ErrorJSON(w, err, http.StatusBadRequest)
+	// 	return
+	// }
 
-	fmt.Println(userId)
+	// fmt.Println(userId)
 
 	err = b.PostModel.CreatePost(payload, userId, b.DB)
 	if err != nil {
