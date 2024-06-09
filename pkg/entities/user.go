@@ -27,20 +27,30 @@ type UserPayload struct {
 	ConfirmPassword string `json:"confirm_password,omitempty"`
 }
 
-type UserModel struct{}
-
 type Claims struct {
 	ID    string `json:"id"`
 	Email string `json:"email"`
 	jwt.RegisteredClaims
 }
 
+type UserModel struct{}
+
 // var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
-func ValidateUser(payload *UserPayload) error {
+type UserValidator interface {
+	ValidateUser(payload *UserPayload) error
+	ValidateLogins(payload *UserPayload) error
+	HashPassword(payload *UserPayload) (string, error)
+	GenerateAuthToken(user *User) (string, error)
+	ValidateClaims(r *http.Request) (int, error)
+}
+
+func (up *UserPayload) ValidateUser(payload *UserPayload) error {
 	if payload.Email == "" {
 		return errors.New("email address is required")
 	}
+
+	fmt.Println(payload.Email)
 
 	if payload.Password == "" {
 		return errors.New("password is required")
@@ -59,7 +69,7 @@ func ValidateUser(payload *UserPayload) error {
 
 }
 
-func ValidateLogins(payload *UserPayload) error {
+func (up *UserPayload) ValidateLogins(payload *UserPayload) error {
 	if payload.Email == "" {
 		return errors.New("email address is required")
 	}
@@ -71,7 +81,7 @@ func ValidateLogins(payload *UserPayload) error {
 	return nil
 }
 
-func HashPassword(payload *UserPayload) (string, error) {
+func (up *UserPayload) HashPassword(payload *UserPayload) (string, error) {
 
 	bytes, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
 
@@ -82,7 +92,7 @@ func HashPassword(payload *UserPayload) (string, error) {
 	return string(bytes), nil
 }
 
-func GenerateAuthToken(user *User) (string, error) {
+func (up *UserPayload) GenerateAuthToken(user *User) (string, error) {
 	secret := []byte(os.Getenv("JWTSECRET"))
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -99,7 +109,7 @@ func GenerateAuthToken(user *User) (string, error) {
 	return tokenString, nil
 }
 
-func ValidateClaims(r *http.Request) (int, error) {
+func (up *UserPayload) ValidateClaims(r *http.Request) (int, error) {
 	secret := []byte(os.Getenv("JWTSECRET"))
 	myCookie, err := r.Cookie("token")
 	if err != nil {

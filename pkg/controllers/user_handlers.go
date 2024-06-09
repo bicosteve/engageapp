@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/engageapp/pkg/entities"
+	"github.com/engageapp/pkg/models"
 	"github.com/engageapp/pkg/utils"
 )
 
@@ -36,14 +37,7 @@ func (b *Base) PostUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate the payload
-	err = entities.ValidateUser(userRequestBody)
-	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusBadRequest)
-		return
-	}
-
-	err = b.UserModel.RegisterUser(userRequestBody, b.DB)
+	err = models.Register(b.UserValidator, userRequestBody, b.DB)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
@@ -68,23 +62,11 @@ func (b *Base) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = entities.ValidateLogins(payload)
+	token, err := models.Login(b.UserValidator, payload, b.DB)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 
-	}
-
-	token, err := b.UserModel.LoginUser(payload, b.DB)
-	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusInternalServerError)
-		return
-	}
-
-	err = utils.PublishToQueue(b.Chan, "Test", token)
-	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusInternalServerError)
-		return
 	}
 
 	cookie := &http.Cookie{
@@ -99,5 +81,5 @@ func (b *Base) Login(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, cookie)
 	r.AddCookie(cookie)
 
-	// utils.WriteJSON(w, http.StatusAccepted, map[string]string{"token": token})
+	utils.WriteJSON(w, http.StatusAccepted, map[string]string{"token": token})
 }

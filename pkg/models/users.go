@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"net/http"
 	"strings"
 	"time"
 
@@ -12,16 +13,16 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UserModel entities.UserModel
-
-func (um *UserModel) RegisterUser(
-	user *entities.UserPayload, db *sql.DB,
-) error {
+func Register(user entities.UserValidator, p *entities.UserPayload, db *sql.DB) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	hash, err := entities.HashPassword(user)
+	err := user.ValidateUser(p)
+	if err != nil {
+		return err
+	}
 
+	hash, err := user.HashPassword(p)
 	if err != nil {
 		return err
 	}
@@ -29,7 +30,7 @@ func (um *UserModel) RegisterUser(
 	q := `INSERT INTO user (email,password_hash,created_at,updated_at)
 		  VALUES (?, ?, ?, ?)`
 
-	data := []interface{}{user.Email, hash, time.Now(), time.Now()}
+	data := []interface{}{p.Email, hash, time.Now(), time.Now()}
 
 	_, err = db.ExecContext(ctx, q, data...)
 
@@ -45,21 +46,22 @@ func (um *UserModel) RegisterUser(
 	}
 
 	return nil
-
 }
 
-func (um *UserModel) LoginUser(
-	user *entities.UserPayload, db *sql.DB,
-) (string, error) {
-
+func Login(user entities.UserValidator, p *entities.UserPayload, db *sql.DB) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
+
+	err := user.ValidateLogins(p)
+	if err != nil {
+		return "", err
+	}
 
 	var dbUser entities.User
 
 	q := `SELECT * FROM user WHERE email = ? LIMIT 1`
-	row := db.QueryRowContext(ctx, q, user.Email)
-	err := row.Scan(
+	row := db.QueryRowContext(ctx, q, p.Email)
+	err = row.Scan(
 		&dbUser.ID,
 		&dbUser.Email,
 		&dbUser.Password,
@@ -71,7 +73,7 @@ func (um *UserModel) LoginUser(
 		return "", err
 	}
 
-	requestPassword := []byte(user.Password)
+	requestPassword := []byte(p.Password)
 	hashedPassword := []byte(dbUser.Password)
 
 	err = bcrypt.CompareHashAndPassword(hashedPassword, requestPassword)
@@ -79,10 +81,19 @@ func (um *UserModel) LoginUser(
 		return "", errors.New("password and email do not match")
 	}
 
-	token, err := entities.GenerateAuthToken(&dbUser)
+	token, err := user.GenerateAuthToken(&dbUser)
 	if err != nil {
 		return "", err
 	}
 
 	return token, nil
+}
+
+func ValidClaim(user entities.UserValidator, r *http.Request) (int, error) {
+
+	userId, err := user.ValidateClaims(r)
+	if err != nil {
+		return 0, errors.New(err.Error())
+	}
+	return userId, nil
 }

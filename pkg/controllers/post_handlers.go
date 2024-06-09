@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/engageapp/pkg/entities"
+	"github.com/engageapp/pkg/models"
 	"github.com/engageapp/pkg/utils"
 )
 
@@ -21,19 +22,11 @@ func (b *Base) CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userId, err := entities.ValidateClaims(r)
+	userId, err := models.ValidClaim(b.UserValidator, r)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
-
-	// userId, err := strconv.Atoi(claims.ID)
-	// if err != nil {
-	// 	utils.ErrorJSON(w, err, http.StatusBadRequest)
-	// 	return
-	// }
-
-	// fmt.Println(userId)
 
 	err = b.PostModel.CreatePost(payload, userId, b.DB)
 	if err != nil {

@@ -6,6 +6,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/engageapp/pkg/entities"
 	"github.com/engageapp/pkg/models"
 	"github.com/engageapp/pkg/utils"
 	"github.com/go-chi/chi/v5"
@@ -14,12 +15,14 @@ import (
 
 // Will contain the code that initializes app dependancies
 type Base struct {
-	Router    *chi.Mux
-	DB        *sql.DB
-	UserModel *models.UserModel
-	RabbitMQ  *amqp.Connection
-	Chan      *amqp.Channel
-	PostModel *models.PostModel
+	Router *chi.Mux
+	DB     *sql.DB
+	//UserModel     *models.UserModel
+	RabbitMQ      *amqp.Connection
+	Chan          *amqp.Channel
+	PostModel     *models.PostModel
+	UserValidator entities.UserValidator
+	//userModeler *models.UserModeler
 }
 
 func (b *Base) Init() {
