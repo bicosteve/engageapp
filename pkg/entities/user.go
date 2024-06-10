@@ -38,29 +38,29 @@ type UserModel struct{}
 // var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
 type UserValidator interface {
-	ValidateUser(payload *UserPayload) error
-	ValidateLogins(payload *UserPayload) error
-	HashPassword(payload *UserPayload) (string, error)
-	GenerateAuthToken(user *User) (string, error)
+	ValidateUser() error
+	ValidateLogins() error
+	HashPassword() (string, error)
+	// GenerateAuthToken(user *User) (string, error)
 	ValidateClaims(r *http.Request) (int, error)
 }
 
-func (um UserModel) ValidateUser(payload *UserPayload) error {
-	if payload.Email == "" {
+func (p *UserPayload) ValidateUser() error {
+	if p.Email == "" {
 		return errors.New("email address is required")
 	}
 
-	fmt.Println(payload.Email)
+	fmt.Println(p.Email)
 
-	if payload.Password == "" {
+	if p.Password == "" {
 		return errors.New("password is required")
 	}
 
-	if payload.ConfirmPassword == "" {
+	if p.ConfirmPassword == "" {
 		return errors.New("confirm password is required")
 	}
 
-	if utf8.RuneCountInString(payload.ConfirmPassword) != utf8.RuneCountInString(payload.Password) {
+	if utf8.RuneCountInString(p.ConfirmPassword) != utf8.RuneCountInString(p.Password) {
 		return errors.New("confirm password is required")
 
 	}
@@ -69,21 +69,21 @@ func (um UserModel) ValidateUser(payload *UserPayload) error {
 
 }
 
-func (um UserModel) ValidateLogins(payload *UserPayload) error {
-	if payload.Email == "" {
+func (p *UserPayload) ValidateLogins() error {
+	if p.Email == "" {
 		return errors.New("email address is required")
 	}
 
-	if payload.Password == "" {
+	if p.Password == "" {
 		return errors.New("password is required")
 	}
 
 	return nil
 }
 
-func (um UserModel) HashPassword(payload *UserPayload) (string, error) {
+func (p *UserPayload) HashPassword() (string, error) {
 
-	bytes, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
+	bytes, err := bcrypt.GenerateFromPassword([]byte(p.Password), bcrypt.DefaultCost)
 
 	if err != nil {
 		return "", errors.New("could not generate password hash")
@@ -92,14 +92,14 @@ func (um UserModel) HashPassword(payload *UserPayload) (string, error) {
 	return string(bytes), nil
 }
 
-func (um UserModel) GenerateAuthToken(user *User) (string, error) {
+func (p *User) GenerateAuthToken() (string, error) {
 	secret := []byte(os.Getenv("JWTSECRET"))
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"issue":   "auth service",
 		"expires": jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-		"user_id": string(user.ID),
-		"email":   string(user.Email),
+		"user_id": string(p.ID),
+		"email":   string(p.Email),
 	})
 
 	tokenString, err := token.SignedString(secret)
@@ -109,7 +109,7 @@ func (um UserModel) GenerateAuthToken(user *User) (string, error) {
 	return tokenString, nil
 }
 
-func (um UserModel) ValidateClaims(r *http.Request) (int, error) {
+func (p *UserPayload) ValidateClaims(r *http.Request) (int, error) {
 	secret := []byte(os.Getenv("JWTSECRET"))
 	myCookie, err := r.Cookie("token")
 	if err != nil {

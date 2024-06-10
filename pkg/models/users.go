@@ -17,12 +17,12 @@ func Register(user entities.UserValidator, p *entities.UserPayload, db *sql.DB) 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := user.ValidateUser(p)
+	err := user.ValidateUser()
 	if err != nil {
 		return err
 	}
 
-	hash, err := user.HashPassword(p)
+	hash, err := user.HashPassword()
 	if err != nil {
 		return err
 	}
@@ -48,16 +48,17 @@ func Register(user entities.UserValidator, p *entities.UserPayload, db *sql.DB) 
 	return nil
 }
 
-func Login(user entities.UserValidator, p *entities.UserPayload, db *sql.DB) (string, error) {
+func Login(u entities.UserValidator, p *entities.UserPayload, db *sql.DB) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	err := user.ValidateLogins(p)
+	err := u.ValidateLogins()
 	if err != nil {
 		return "", err
 	}
 
 	var dbUser entities.User
+	var user entities.User
 
 	q := `SELECT * FROM user WHERE email = ? LIMIT 1`
 	row := db.QueryRowContext(ctx, q, p.Email)
@@ -81,7 +82,7 @@ func Login(user entities.UserValidator, p *entities.UserPayload, db *sql.DB) (st
 		return "", errors.New("password and email do not match")
 	}
 
-	token, err := user.GenerateAuthToken(&dbUser)
+	token, err := user.GenerateAuthToken()
 	if err != nil {
 		return "", err
 	}

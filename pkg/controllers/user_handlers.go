@@ -29,21 +29,21 @@ func (b *Base) Broker(w http.ResponseWriter, r *http.Request) {
 
 // PostUser() -> checks user request body and validates it
 func (b *Base) PostUser(w http.ResponseWriter, r *http.Request) {
-	userRequestBody := new(entities.UserPayload)
+	payload := new(entities.UserPayload)
 
-	err := utils.ReadJSON(w, r, userRequestBody)
+	err := utils.ReadJSON(w, r, payload)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 
-	err = models.Register(b.UserValidator, userRequestBody, b.DB)
+	err = models.Register(payload, payload, b.DB)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 
-	err = utils.PublishToQueue(b.Chan, "Test", userRequestBody)
+	err = utils.PublishToQueue(b.Chan, "Test", payload)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusInternalServerError)
 		return
@@ -62,7 +62,7 @@ func (b *Base) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := models.Login(b.UserValidator, payload, b.DB)
+	token, err := models.Login(payload, payload, b.DB)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
