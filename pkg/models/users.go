@@ -14,9 +14,7 @@ import (
 
 type UserModel entities.UserModel
 
-func (um *UserModel) RegisterUser(
-	user *entities.UserPayload, db *sql.DB,
-) error {
+func (um *UserModel) RegisterUser(user *entities.UserPayload, db *sql.DB) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -48,10 +46,7 @@ func (um *UserModel) RegisterUser(
 
 }
 
-func (um *UserModel) LoginUser(
-	user *entities.UserPayload, db *sql.DB,
-) (string, error) {
-
+func (um *UserModel) LoginUser(user *entities.UserPayload, db *sql.DB) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
