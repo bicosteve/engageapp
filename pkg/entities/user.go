@@ -1,13 +1,11 @@
 package entities
 
 import (
-	"crypto/ecdsa"
-	"crypto/elliptic"
-	"crypto/rand"
-	"crypto/x509"
-	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 	"unicode/utf8"
 
@@ -29,9 +27,7 @@ type UserPayload struct {
 	ConfirmPassword string `json:"confirm_password,omitempty"`
 }
 
-type UserModel struct {
-	DB *sql.DB
-}
+type UserModel struct{}
 
 type Claims struct {
 	ID    string `json:"id"`
@@ -41,7 +37,7 @@ type Claims struct {
 
 // var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
-func Validate(payload *UserPayload) error {
+func ValidateUser(payload *UserPayload) error {
 	if payload.Email == "" {
 		return errors.New("email address is required")
 	}
@@ -87,64 +83,68 @@ func HashPassword(payload *UserPayload) (string, error) {
 }
 
 func GenerateAuthToken(user *User) (string, error) {
-	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		return "", err
-	}
-	claims := &Claims{
-		ID:    user.ID,
-		Email: user.Email,
-		RegisteredClaims: jwt.RegisteredClaims{
-			Issuer:    "authservice",
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
-		},
-	}
+	secret := []byte(os.Getenv("JWTSECRET"))
 
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, claims)
-	tokenString, err := token.SignedString(key)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"issue":   "auth service",
+		"expires": jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+		"user_id": string(user.ID),
+		"email":   string(user.Email),
+	})
+
+	tokenString, err := token.SignedString(secret)
 	if err != nil {
 		return "", err
 	}
 	return tokenString, nil
 }
 
-// func GetToken(r *http.Request) (string, error) {
-// 	cookie, err := r.Cookie("token")
-// 	if err != nil {
-// 		if err == http.ErrNoCookie {
-// 			return "", errors.New("there is no cookie set")
-// 		}
-
-// 		return "", err
-// 	}
-
-// 	tokenStr := cookie.Value
-// 	return tokenStr, nil
-
-// }
-
-func ValidateClaims(claims *Claims, r *http.Request) (*Claims, error) {
-	key, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	derBuf, _ := x509.MarshalECPrivateKey(key)
-	// privKey, _ := x509.ParseECPrivateKey(derBuf)
-
-	c, err := r.Cookie("token")
+func ValidateClaims(r *http.Request) (int, error) {
+	secret := []byte(os.Getenv("JWTSECRET"))
+	myCookie, err := r.Cookie("token")
 	if err != nil {
-		return &Claims{}, err
+		return 0, errors.New(err.Error())
 	}
 
-	tkn, err := jwt.ParseWithClaims(c.Value, claims, func(t *jwt.Token) (interface{}, error) {
-		return []byte(derBuf), nil
+	token, err := jwt.Parse(myCookie.Value, func(token *jwt.Token) (interface{}, error) {
+		_, ok := token.Method.(*jwt.SigningMethodHMAC)
+		if !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+
+		return secret, nil
 	})
 
 	if err != nil {
-		return &Claims{}, err
+		return 0, errors.New(err.Error())
 	}
 
-	if !tkn.Valid {
-		return &Claims{}, nil
+	if token == nil {
+		return 0, errors.New("there is no token in the header")
 	}
 
-	return claims, nil
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return 0, errors.New("token parse error")
+	}
+
+	mapData, ok := claims["data"].(map[string]interface{})
+	if !ok {
+		return 0, errors.New("assert claims[\"data\"] as map[string]interface{} failed")
+	}
+
+	exp := claims["expires"].(float64)
+	if int64(exp) < time.Now().Unix() {
+		return 0, errors.New("token expired")
+	}
+
+	userStr, ok := mapData["user_id"].(string)
+	if !ok {
+		return 0, errors.New("assert mapData[\"user_id\"] as string failed")
+	}
+
+	userID, _ := strconv.Atoi(userStr)
+
+	return userID, nil
+
 }

@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/engageapp/pkg/utils"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
-	"github.com/go-chi/cors"
 )
 
 // Will contain the code that handles api endpoints
@@ -20,7 +20,7 @@ func (b *Base) RunBroker() {
 	b.Router = chi.NewRouter()
 
 	// set cors for chi
-	setCors(b.Router)
+	utils.SetCors(b.Router)
 
 	// Check if the broker works
 	b.Router.Use(middleware.Heartbeat("/ping-broker"))
@@ -37,17 +37,18 @@ func (b *Base) RunBroker() {
 
 	err := srv.ListenAndServe()
 	if err != nil {
-		log.Printf("Error %s", err)
+		log.Printf("Error running broker %s", err)
 		os.Exit(1)
 	}
 
 }
 
+// Run Auth Service
 func (b *Base) RunAuth() {
 	port := ":81"
 	b.Router = chi.NewRouter()
 
-	setCors(b.Router)
+	utils.SetCors(b.Router)
 
 	b.Router.Use((middleware.Heartbeat("/ping-auth")))
 
@@ -62,19 +63,33 @@ func (b *Base) RunAuth() {
 
 	err := srv.ListenAndServe()
 	if err != nil {
-		log.Printf("Error %s ", err)
+		log.Printf("Error running auth service %s ", err)
 		os.Exit(2)
 	}
 
 }
 
-func setCors(r *chi.Mux) {
-	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"https://*", "http://*"},
-		AllowedMethods:   []string{"POST", "GET", "DELETE", "PUT", "PATCH", "OPTIONS"},
-		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		AllowCredentials: true,
-		MaxAge:           300,
-	}))
+// Run Post Service
+func (b *Base) RunPost() {
+	port := ":82"
+
+	b.Router = chi.NewRouter()
+	utils.SetCors(b.Router)
+
+	b.Router.Use(middleware.Heartbeat("/ping-post"))
+
+	log.Printf("Running post service on port %s ...\n", port)
+	srv := &http.Server{
+		Addr:    port,
+		Handler: b.Router,
+	}
+
+	b.Router.Post("/post", b.CreatePost)
+
+	err := srv.ListenAndServe()
+	if err != nil {
+		log.Printf("Error on post service %s ", err)
+		os.Exit(2)
+	}
 
 }
