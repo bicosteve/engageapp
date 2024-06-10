@@ -45,7 +45,7 @@ type UserValidator interface {
 	ValidateClaims(r *http.Request) (int, error)
 }
 
-func (up UserPayload) ValidateUser(payload *UserPayload) error {
+func (um UserModel) ValidateUser(payload *UserPayload) error {
 	if payload.Email == "" {
 		return errors.New("email address is required")
 	}
@@ -69,7 +69,7 @@ func (up UserPayload) ValidateUser(payload *UserPayload) error {
 
 }
 
-func (up UserPayload) ValidateLogins(payload *UserPayload) error {
+func (um UserModel) ValidateLogins(payload *UserPayload) error {
 	if payload.Email == "" {
 		return errors.New("email address is required")
 	}
@@ -81,7 +81,7 @@ func (up UserPayload) ValidateLogins(payload *UserPayload) error {
 	return nil
 }
 
-func (up UserPayload) HashPassword(payload *UserPayload) (string, error) {
+func (um UserModel) HashPassword(payload *UserPayload) (string, error) {
 
 	bytes, err := bcrypt.GenerateFromPassword([]byte(payload.Password), bcrypt.DefaultCost)
 
@@ -92,7 +92,7 @@ func (up UserPayload) HashPassword(payload *UserPayload) (string, error) {
 	return string(bytes), nil
 }
 
-func (up UserPayload) GenerateAuthToken(user *User) (string, error) {
+func (um UserModel) GenerateAuthToken(user *User) (string, error) {
 	secret := []byte(os.Getenv("JWTSECRET"))
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -109,7 +109,7 @@ func (up UserPayload) GenerateAuthToken(user *User) (string, error) {
 	return tokenString, nil
 }
 
-func (up UserPayload) ValidateClaims(r *http.Request) (int, error) {
+func (um UserModel) ValidateClaims(r *http.Request) (int, error) {
 	secret := []byte(os.Getenv("JWTSECRET"))
 	myCookie, err := r.Cookie("token")
 	if err != nil {

@@ -15,9 +15,9 @@ import (
 
 // Will contain the code that initializes app dependancies
 type Base struct {
-	Router *chi.Mux
-	DB     *sql.DB
-	//UserModel     *models.UserModel
+	Router        *chi.Mux
+	DB            *sql.DB
+	UserModel     *entities.UserModel
 	RabbitMQ      *amqp.Connection
 	Chan          *amqp.Channel
 	PostModel     *models.PostModel
