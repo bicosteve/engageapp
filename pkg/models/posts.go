@@ -27,3 +27,27 @@ func (p *PostModel) CreatePost(post *entities.PostPayload, userId int, db *sql.D
 
 	return nil
 }
+
+func CreatePost(p entities.PostValidator, post *entities.PostPayload, userId int, db *sql.DB) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	err := p.ValidatePost()
+	if err != nil {
+		return err
+	}
+
+	query := `INSERT INTO post(message, created_at, updated_at, user_id)
+		  VALUES(?, ?, ?, ?)`
+
+	data := []interface{}{post.Message, time.Now(), time.Now(), userId}
+
+	_, err = db.ExecContext(ctx, query, data...)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}

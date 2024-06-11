@@ -16,11 +16,12 @@ func (b *Base) CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = entities.ValidatePost(payload)
-	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusBadRequest)
-		return
-	}
+	// err = entities.ValidatePost(payload)
+
+	// if err != nil {
+	// 	utils.ErrorJSON(w, err, http.StatusBadRequest)
+	// 	return
+	// }
 
 	userId, err := models.ValidClaim(b.UserValidator, r)
 	if err != nil {
@@ -28,7 +29,9 @@ func (b *Base) CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = b.PostModel.CreatePost(payload, userId, b.DB)
+	//err = b.PostModel.CreatePost(payload, userId, b.DB)
+
+	err = models.CreatePost(payload, payload, userId, b.DB)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusInternalServerError)
 		return

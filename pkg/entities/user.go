@@ -41,7 +41,6 @@ type UserValidator interface {
 	ValidateUser() error
 	ValidateLogins() error
 	HashPassword() (string, error)
-	// GenerateAuthToken(user *User) (string, error)
 	ValidateClaims(r *http.Request) (int, error)
 }
 
