@@ -37,7 +37,7 @@ func (b *Base) PostUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = models.Register(payload, payload, b.DB)
+	err = models.Register(payload, b.DB)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return

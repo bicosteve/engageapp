@@ -13,7 +13,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func Register(user entities.UserValidator, p *entities.UserPayload, db *sql.DB) error {
+func Register(user entities.UserValidator, db *sql.DB) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -30,7 +30,7 @@ func Register(user entities.UserValidator, p *entities.UserPayload, db *sql.DB) 
 	q := `INSERT INTO user (email,password_hash,created_at,updated_at)
 		  VALUES (?, ?, ?, ?)`
 
-	data := []interface{}{p.Email, hash, time.Now(), time.Now()}
+	data := []interface{}{user.GetEmail(), hash, time.Now(), time.Now()}
 
 	_, err = db.ExecContext(ctx, q, data...)
 

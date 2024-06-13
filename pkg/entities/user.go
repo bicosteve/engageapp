@@ -42,14 +42,13 @@ type UserValidator interface {
 	ValidateLogins() error
 	HashPassword() (string, error)
 	ValidateClaims(r *http.Request) (int, error)
+	GetEmail() string
 }
 
 func (p *UserPayload) ValidateUser() error {
 	if p.Email == "" {
 		return errors.New("email address is required")
 	}
-
-	fmt.Println(p.Email)
 
 	if p.Password == "" {
 		return errors.New("password is required")
@@ -156,4 +155,8 @@ func (p *UserPayload) ValidateClaims(r *http.Request) (int, error) {
 
 	return userID, nil
 
+}
+
+func (p *UserPayload) GetEmail() string {
+	return p.Email
 }
