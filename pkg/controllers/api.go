@@ -85,6 +85,7 @@ func (b *Base) RunPost() {
 	}
 
 	b.Router.Post("/post", b.CreatePost)
+	b.Router.Get("/posts", b.GetPosts)
 
 	err := srv.ListenAndServe()
 	if err != nil {
