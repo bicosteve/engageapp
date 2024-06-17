@@ -3,7 +3,6 @@ package controllers
 import (
 	"errors"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/engageapp/pkg/entities"
@@ -13,7 +12,6 @@ import (
 )
 
 func (b *Base) CreatePost(w http.ResponseWriter, r *http.Request) {
-	secret := []byte(os.Getenv("JWTSECRET"))
 	var payload *entities.PostPayload
 
 	err := utils.ReadJSON(w, r, &payload)
@@ -28,7 +26,7 @@ func (b *Base) CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := b.User.ValidateClaim(tknString, string(secret))
+	token, err := b.User.ValidateClaim(tknString)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
@@ -55,4 +53,13 @@ func (b *Base) CreatePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteJSON(w, http.StatusOK, map[string]string{"msg": "Post Created"})
+}
+
+func (b *Base) GetPosts(w http.ResponseWriter, r *http.Request) {
+	posts, err := models.GetPosts(b.DB)
+	if err != nil {
+		utils.ErrorJSON(w, err, http.StatusBadRequest)
+	}
+
+	utils.WriteJSON(w, http.StatusOK, map[string]interface{}{"posts": posts})
 }

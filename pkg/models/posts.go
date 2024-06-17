@@ -8,26 +8,6 @@ import (
 	"github.com/engageapp/pkg/entities"
 )
 
-// type PostModel entities.PostModel
-
-// func (p *PostModel) CreatePost(post *entities.PostPayload, userId int, db *sql.DB) error {
-// 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-// 	defer cancel()
-
-// 	query := `INSERT INTO post(message, created_at, updated_at, user_id)
-// 		  VALUES(?, ?, ?, ?)`
-
-// 	data := []interface{}{post.Message, time.Now(), time.Now(), userId}
-
-// 	_, err := db.ExecContext(ctx, query, data...)
-
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	return nil
-// }
-
 func CreatePost(p entities.PostValidator, userId int, db *sql.DB) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -50,4 +30,38 @@ func CreatePost(p entities.PostValidator, userId int, db *sql.DB) error {
 
 	return nil
 
+}
+
+func GetPosts(db *sql.DB) ([]*entities.Post, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	_ = ctx
+
+	var posts []*entities.Post
+	_ = posts
+
+	q := `SELECT * FROM post LIMIT 100`
+	rows, err := db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, err
+	}
+
+	for rows.Next() {
+		var post entities.Post
+		err := rows.Scan(
+			&post.ID,
+			&post.Message,
+			&post.CreatedAt,
+			&post.UpdateAt,
+			&post.UserId,
+		)
+
+		if err != nil {
+			return nil, err
+		}
+
+		posts = append(posts, &post)
+	}
+
+	return posts, nil
 }

@@ -126,13 +126,14 @@ func (user *User) GetTokenString(r *http.Request) (string, error) {
 	return cookie.Value, nil
 }
 
-func (user *User) ValidateClaim(tokenStr, jwtSecret string) (*jwt.Token, error) {
+func (user *User) ValidateClaim(tokenStr string) (*jwt.Token, error) {
+	secret := []byte(os.Getenv("JWTSECRET"))
 	return jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)
 		if !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(jwtSecret), nil
+		return []byte(secret), nil
 	})
 
 }
