@@ -12,6 +12,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+
 func Register(user entities.UserValidator, db *sql.DB) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -47,6 +48,7 @@ func Register(user entities.UserValidator, db *sql.DB) error {
 	return nil
 }
 
+  
 func LoginToken(u entities.UserValidator, db *sql.DB) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
