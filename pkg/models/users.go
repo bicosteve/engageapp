@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"net/http"
 	"strings"
 	"time"
 
@@ -48,7 +47,7 @@ func Register(user entities.UserValidator, db *sql.DB) error {
 	return nil
 }
 
-func Login(u entities.UserValidator, p *entities.UserPayload, db *sql.DB) (string, error) {
+func LoginToken(u entities.UserValidator, db *sql.DB) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
@@ -58,10 +57,9 @@ func Login(u entities.UserValidator, p *entities.UserPayload, db *sql.DB) (strin
 	}
 
 	var dbUser entities.User
-	var user entities.User
 
 	q := `SELECT * FROM user WHERE email = ? LIMIT 1`
-	row := db.QueryRowContext(ctx, q, p.Email)
+	row := db.QueryRowContext(ctx, q, u.GetEmail())
 	err = row.Scan(
 		&dbUser.ID,
 		&dbUser.Email,
@@ -74,7 +72,7 @@ func Login(u entities.UserValidator, p *entities.UserPayload, db *sql.DB) (strin
 		return "", err
 	}
 
-	requestPassword := []byte(p.Password)
+	requestPassword := []byte(u.GetPassword())
 	hashedPassword := []byte(dbUser.Password)
 
 	err = bcrypt.CompareHashAndPassword(hashedPassword, requestPassword)
@@ -82,19 +80,29 @@ func Login(u entities.UserValidator, p *entities.UserPayload, db *sql.DB) (strin
 		return "", errors.New("password and email do not match")
 	}
 
-	token, err := user.GenerateAuthToken()
+	token, err := entities.CreateJWTToken(&dbUser)
 	if err != nil {
-		return "", err
+		return "", errors.New(err.Error())
 	}
 
 	return token, nil
 }
 
-func ValidClaim(user entities.UserValidator, r *http.Request) (int, error) {
+func GetByEmail(u entities.UserValidator, db *sql.DB) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	var user entities.User
 
-	userId, err := user.ValidateClaims(r)
+	err := u.ValidateLogins()
 	if err != nil {
-		return 0, errors.New(err.Error())
+		return false, err
 	}
-	return userId, nil
+
+	q := `SELECT email FROM user WHERE email = ? LIMIT 1`
+	row := db.QueryRowContext(ctx, q, u.GetEmail())
+	err = row.Scan(&user.Email)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }

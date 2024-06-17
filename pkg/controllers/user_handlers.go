@@ -3,6 +3,7 @@ package controllers
 // Contains code for RabbitMQ producer
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -37,6 +38,17 @@ func (b *Base) PostUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	user, err := models.GetByEmail(payload, b.DB)
+	if err != nil {
+		utils.ErrorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	if user {
+		utils.ErrorJSON(w, errors.New("user already registered"), http.StatusBadRequest)
+		return
+	}
+
 	err = models.Register(payload, b.DB)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
@@ -62,7 +74,18 @@ func (b *Base) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := models.Login(payload, payload, b.DB)
+	usr, err := models.GetByEmail(payload, b.DB)
+	if err != nil {
+		utils.ErrorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	if !usr {
+		utils.ErrorJSON(w, errors.New("invalid user"), http.StatusBadRequest)
+		return
+	}
+
+	token, err := models.LoginToken(payload, b.DB)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
@@ -81,5 +104,5 @@ func (b *Base) Login(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, cookie)
 	r.AddCookie(cookie)
 
-	utils.WriteJSON(w, http.StatusAccepted, map[string]string{"token": token})
+	utils.WriteJSON(w, http.StatusAccepted, map[string]string{"msg": "login success"})
 }

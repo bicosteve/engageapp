@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"strconv"
 	"time"
 	"unicode/utf8"
 
@@ -27,13 +26,13 @@ type UserPayload struct {
 	ConfirmPassword string `json:"confirm_password,omitempty"`
 }
 
-type Claims struct {
+type CustomClaims struct {
 	ID    string `json:"id"`
 	Email string `json:"email"`
 	jwt.RegisteredClaims
 }
 
-type UserModel struct{}
+// type UserModel struct{}
 
 // var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
@@ -41,8 +40,8 @@ type UserValidator interface {
 	ValidateUser() error
 	ValidateLogins() error
 	HashPassword() (string, error)
-	ValidateClaims(r *http.Request) (int, error)
 	GetEmail() string
+	GetPassword() string
 }
 
 func (p *UserPayload) ValidateUser() error {
@@ -90,15 +89,23 @@ func (p *UserPayload) HashPassword() (string, error) {
 	return string(bytes), nil
 }
 
-func (p *User) GenerateAuthToken() (string, error) {
-	secret := []byte(os.Getenv("JWTSECRET"))
+func (p *UserPayload) GetEmail() string {
+	return p.Email
+}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"issue":   "auth service",
-		"expires": jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-		"user_id": string(p.ID),
-		"email":   string(p.Email),
-	})
+func (p *UserPayload) GetPassword() string {
+	return p.Password
+}
+
+func CreateJWTToken(user *User) (string, error) {
+	secret := []byte(os.Getenv("JWTSECRET"))
+	claims := jwt.MapClaims{
+		"userId": user.ID,
+		"email":  user.Email,
+		"exp":    time.Now().Add(time.Hour * 24).Unix(),
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	tokenString, err := token.SignedString(secret)
 	if err != nil {
@@ -107,56 +114,25 @@ func (p *User) GenerateAuthToken() (string, error) {
 	return tokenString, nil
 }
 
-func (p *UserPayload) ValidateClaims(r *http.Request) (int, error) {
-	secret := []byte(os.Getenv("JWTSECRET"))
-	myCookie, err := r.Cookie("token")
+func (user *User) GetTokenString(r *http.Request) (string, error) {
+	cookie, err := r.Cookie("token")
 	if err != nil {
-		return 0, errors.New(err.Error())
+		if err == http.ErrNoCookie {
+			return "", errors.New(err.Error())
+		}
+		return "", err
 	}
 
-	token, err := jwt.Parse(myCookie.Value, func(token *jwt.Token) (interface{}, error) {
+	return cookie.Value, nil
+}
+
+func (user *User) ValidateClaim(tokenStr, jwtSecret string) (*jwt.Token, error) {
+	return jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 		_, ok := token.Method.(*jwt.SigningMethodHMAC)
 		if !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-
-		return secret, nil
+		return []byte(jwtSecret), nil
 	})
 
-	if err != nil {
-		return 0, errors.New(err.Error())
-	}
-
-	if token == nil {
-		return 0, errors.New("there is no token in the header")
-	}
-
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return 0, errors.New("token parse error")
-	}
-
-	mapData, ok := claims["data"].(map[string]interface{})
-	if !ok {
-		return 0, errors.New("assert claims[\"data\"] as map[string]interface{} failed")
-	}
-
-	exp := claims["expires"].(float64)
-	if int64(exp) < time.Now().Unix() {
-		return 0, errors.New("token expired")
-	}
-
-	userStr, ok := mapData["user_id"].(string)
-	if !ok {
-		return 0, errors.New("assert mapData[\"user_id\"] as string failed")
-	}
-
-	userID, _ := strconv.Atoi(userStr)
-
-	return userID, nil
-
-}
-
-func (p *UserPayload) GetEmail() string {
-	return p.Email
 }

@@ -1,42 +1,58 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
+	"os"
+	"strconv"
 
 	"github.com/engageapp/pkg/entities"
 	"github.com/engageapp/pkg/models"
 	"github.com/engageapp/pkg/utils"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func (b *Base) CreatePost(w http.ResponseWriter, r *http.Request) {
+	secret := []byte(os.Getenv("JWTSECRET"))
 	var payload *entities.PostPayload
+
 	err := utils.ReadJSON(w, r, &payload)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 
-	// err = entities.ValidatePost(payload)
-
-	// if err != nil {
-	// 	utils.ErrorJSON(w, err, http.StatusBadRequest)
-	// 	return
-	// }
-
-	userId, err := models.ValidClaim(b.UserValidator, r)
+	tknString, err := b.User.GetTokenString(r)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 
-	//err = b.PostModel.CreatePost(payload, userId, b.DB)
+	token, err := b.User.ValidateClaim(tknString, string(secret))
+	if err != nil {
+		utils.ErrorJSON(w, err, http.StatusBadRequest)
+		return
+	}
 
-	err = models.CreatePost(payload, payload, userId, b.DB)
+	if !token.Valid {
+		utils.ErrorJSON(w, errors.New("invalid token"), http.StatusBadRequest)
+		return
+	}
+
+	claims := token.Claims.(jwt.MapClaims)
+	usr := claims["userId"].(string)
+
+	userId, err := strconv.Atoi(usr)
+	if err != nil {
+		utils.ErrorJSON(w, errors.New(err.Error()), http.StatusBadRequest)
+		return
+	}
+
+	err = models.CreatePost(payload, userId, b.DB)
 	if err != nil {
 		utils.ErrorJSON(w, err, http.StatusInternalServerError)
 		return
 	}
 
 	utils.WriteJSON(w, http.StatusOK, map[string]string{"msg": "Post Created"})
-
 }

@@ -21,15 +21,8 @@ type PostPayload struct {
 
 type PostValidator interface {
 	ValidatePost() error
+	GetMessage() string
 }
-
-// func ValidatePost(post *PostPayload) error {
-// 	if post.Message == "" {
-// 		return errors.New("message is required")
-// 	}
-
-// 	return nil
-// }
 
 func (p *PostPayload) ValidatePost() error {
 	if p.Message == "" {
@@ -37,4 +30,8 @@ func (p *PostPayload) ValidatePost() error {
 	}
 
 	return nil
+}
+
+func (p *PostPayload) GetMessage() string {
+	return p.Message
 }
