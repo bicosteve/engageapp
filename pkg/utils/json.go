@@ -3,9 +3,10 @@ package utils
 import (
 	"encoding/json"
 	"errors"
-	"github.com/engageapp/pkg/entities"
 	"io"
 	"net/http"
+
+	"github.com/engageapp/pkg/entities"
 )
 
 // ReadJSON -> helper function for reading json from client

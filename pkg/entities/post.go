@@ -19,10 +19,19 @@ type PostPayload struct {
 	Message string `json:"message"`
 }
 
-func ValidatePost(post *PostPayload) error {
-	if post.Message == "" {
+type PostValidator interface {
+	ValidatePost() error
+	GetMessage() string
+}
+
+func (p *PostPayload) ValidatePost() error {
+	if p.Message == "" {
 		return errors.New("message is required")
 	}
 
 	return nil
+}
+
+func (p *PostPayload) GetMessage() string {
+	return p.Message
 }

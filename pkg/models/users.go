@@ -12,14 +12,17 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UserModel entities.UserModel
 
-func (um *UserModel) RegisterUser(user *entities.UserPayload, db *sql.DB) error {
+func Register(user entities.UserValidator, db *sql.DB) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	hash, err := entities.HashPassword(user)
+	err := user.ValidateUser()
+	if err != nil {
+		return err
+	}
 
+	hash, err := user.HashPassword()
 	if err != nil {
 		return err
 	}
@@ -27,7 +30,7 @@ func (um *UserModel) RegisterUser(user *entities.UserPayload, db *sql.DB) error 
 	q := `INSERT INTO user (email,password_hash,created_at,updated_at)
 		  VALUES (?, ?, ?, ?)`
 
-	data := []interface{}{user.Email, hash, time.Now(), time.Now()}
+	data := []interface{}{user.GetEmail(), hash, time.Now(), time.Now()}
 
 	_, err = db.ExecContext(ctx, q, data...)
 
@@ -43,18 +46,23 @@ func (um *UserModel) RegisterUser(user *entities.UserPayload, db *sql.DB) error 
 	}
 
 	return nil
-
 }
 
-func (um *UserModel) LoginUser(user *entities.UserPayload, db *sql.DB) (string, error) {
+  
+func LoginToken(u entities.UserValidator, db *sql.DB) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
+
+	err := u.ValidateLogins()
+	if err != nil {
+		return "", err
+	}
 
 	var dbUser entities.User
 
 	q := `SELECT * FROM user WHERE email = ? LIMIT 1`
-	row := db.QueryRowContext(ctx, q, user.Email)
-	err := row.Scan(
+	row := db.QueryRowContext(ctx, q, u.GetEmail())
+	err = row.Scan(
 		&dbUser.ID,
 		&dbUser.Email,
 		&dbUser.Password,
@@ -66,7 +74,7 @@ func (um *UserModel) LoginUser(user *entities.UserPayload, db *sql.DB) (string, 
 		return "", err
 	}
 
-	requestPassword := []byte(user.Password)
+	requestPassword := []byte(u.GetPassword())
 	hashedPassword := []byte(dbUser.Password)
 
 	err = bcrypt.CompareHashAndPassword(hashedPassword, requestPassword)
@@ -74,10 +82,29 @@ func (um *UserModel) LoginUser(user *entities.UserPayload, db *sql.DB) (string, 
 		return "", errors.New("password and email do not match")
 	}
 
-	token, err := entities.GenerateAuthToken(&dbUser)
+	token, err := entities.CreateJWTToken(&dbUser)
 	if err != nil {
-		return "", err
+		return "", errors.New(err.Error())
 	}
 
 	return token, nil
+}
+
+func GetByEmail(u entities.UserValidator, db *sql.DB) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	var user entities.User
+
+	err := u.ValidateLogins()
+	if err != nil {
+		return false, err
+	}
+
+	q := `SELECT email FROM user WHERE email = ? LIMIT 1`
+	row := db.QueryRowContext(ctx, q, u.GetEmail())
+	err = row.Scan(&user.Email)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
