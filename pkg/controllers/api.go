@@ -86,6 +86,8 @@ func (b *Base) RunPost() {
 
 	b.Router.Post("/post", b.CreatePost)
 	b.Router.Get("/posts", b.GetPosts)
+	b.Router.Get("/posts/{postId}", b.GetPost)
+	b.Router.Delete("/posts/{postId}", b.DeleteAPost)
 
 	err := srv.ListenAndServe()
 	if err != nil {
