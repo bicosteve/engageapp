@@ -12,7 +12,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-
 func Register(user entities.UserValidator, db *sql.DB) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -48,7 +47,6 @@ func Register(user entities.UserValidator, db *sql.DB) error {
 	return nil
 }
 
-  
 func LoginToken(u entities.UserValidator, db *sql.DB) (string, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -103,8 +101,12 @@ func GetByEmail(u entities.UserValidator, db *sql.DB) (bool, error) {
 	q := `SELECT email FROM user WHERE email = ? LIMIT 1`
 	row := db.QueryRowContext(ctx, q, u.GetEmail())
 	err = row.Scan(&user.Email)
-	if err != nil {
-		return false, err
+
+	switch err {
+	case sql.ErrNoRows:
+		return false, errors.New(err.Error())
+	default:
+		return true, nil
+
 	}
-	return true, nil
 }
