@@ -38,11 +38,7 @@ func (b *Base) PostUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := models.GetByEmail(payload, b.DB)
-	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusBadRequest)
-		return
-	}
+	user, _ := models.GetByEmail(payload, b.DB)
 
 	if user {
 		utils.ErrorJSON(w, errors.New("user already registered"), http.StatusBadRequest)
@@ -74,11 +70,7 @@ func (b *Base) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usr, err := models.GetByEmail(payload, b.DB)
-	if err != nil {
-		utils.ErrorJSON(w, err, http.StatusBadRequest)
-		return
-	}
+	usr, _ := models.GetByEmail(payload, b.DB)
 
 	if !usr {
 		utils.ErrorJSON(w, errors.New("invalid user"), http.StatusBadRequest)

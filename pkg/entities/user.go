@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"time"
 	"unicode/utf8"
 
@@ -32,9 +33,7 @@ type CustomClaims struct {
 	jwt.RegisteredClaims
 }
 
-// type UserModel struct{}
-
-// var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
 type UserValidator interface {
 	ValidateUser() error
@@ -49,6 +48,10 @@ func (p *UserPayload) ValidateUser() error {
 		return errors.New("email address is required")
 	}
 
+	if !validateEmail(p.Email, emailRegex) {
+		return errors.New("email is invalid")
+	}
+
 	if p.Password == "" {
 		return errors.New("password is required")
 	}
@@ -58,7 +61,7 @@ func (p *UserPayload) ValidateUser() error {
 	}
 
 	if utf8.RuneCountInString(p.ConfirmPassword) != utf8.RuneCountInString(p.Password) {
-		return errors.New("confirm password is required")
+		return errors.New("passwords do not match")
 
 	}
 
@@ -69,6 +72,10 @@ func (p *UserPayload) ValidateUser() error {
 func (p *UserPayload) ValidateLogins() error {
 	if p.Email == "" {
 		return errors.New("email address is required")
+	}
+
+	if !validateEmail(p.Email, emailRegex) {
+		return errors.New("email is invalid")
 	}
 
 	if p.Password == "" {
@@ -136,4 +143,8 @@ func (user *User) ValidateClaim(tokenStr string) (*jwt.Token, error) {
 		return []byte(secret), nil
 	})
 
+}
+
+func validateEmail(email string, pattern *regexp.Regexp) bool {
+	return pattern.MatchString(email)
 }
