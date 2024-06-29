@@ -94,3 +94,29 @@ func (b *Base) RunPost() {
 	}
 
 }
+
+// Run Comment Service
+func (b *Base) RunComment() {
+	port := ":83"
+
+	b.Router = chi.NewRouter()
+	utils.SetCors(b.Router)
+
+	b.Router.Use(middleware.Heartbeat("/ping-comment"))
+
+	log.Printf("Running comment service on port %s ...\n", port)
+	srv := &http.Server{
+		Addr:    port,
+		Handler: b.Router,
+	}
+
+	b.Router.Post("/comment/{commentid}", b.CreateComment)
+	b.Router.Get("/comments", b.GetComments)
+
+	err := srv.ListenAndServe()
+	if err != nil {
+		log.Printf("Error on post service %s ", err)
+		os.Exit(2)
+	}
+
+}

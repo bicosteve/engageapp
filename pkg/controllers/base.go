@@ -14,14 +14,10 @@ import (
 
 // Will contain the code that initializes app dependancies
 type Base struct {
-	Router *chi.Mux
-	DB     *sql.DB
-	//UserModel *entities.UserModel
-	RabbitMQ *amqp.Connection
-	Chan     *amqp.Channel
-	//PostModel     *models.PostModel
-	UserValidator entities.UserValidator
-	//userModeler *models.UserModeler
+	Router       *chi.Mux
+	DB           *sql.DB
+	RabbitMQ     *amqp.Connection
+	Chan         *amqp.Channel
 	User         *entities.User
 	CustomClaims *entities.CustomClaims
 }

@@ -38,7 +38,6 @@ func GetPosts(db *sql.DB) ([]*entities.Post, error) {
 	_ = ctx
 
 	var posts []*entities.Post
-	_ = posts
 
 	q := `SELECT * FROM post LIMIT 100`
 	rows, err := db.QueryContext(ctx, q)

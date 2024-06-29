@@ -52,7 +52,7 @@ func (b *Base) CreatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.WriteJSON(w, http.StatusOK, map[string]string{"msg": "Post Created"})
+	utils.WriteJSON(w, http.StatusCreated, map[string]string{"msg": "Post Created"})
 }
 
 func (b *Base) GetPosts(w http.ResponseWriter, r *http.Request) {
