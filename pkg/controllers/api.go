@@ -110,8 +110,8 @@ func (b *Base) RunComment() {
 		Handler: b.Router,
 	}
 
-	b.Router.Post("/comment/{commentid}", b.CreateComment)
-	b.Router.Get("/comments", b.GetComments)
+	b.Router.Post("/comment/{postid}", b.CreateComment)
+	b.Router.Get("/comment/{postid}", b.GetComments)
 
 	err := srv.ListenAndServe()
 	if err != nil {

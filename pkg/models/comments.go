@@ -18,7 +18,7 @@ func AddComment(c entities.CommentValidator, userId, postId int, db *sql.DB) err
 	}
 
 	q := `INSERT INTO comment (comment, created_at, updated_at, user_id, post_id)
-			VALUES (?, ?, ?, ?)`
+			VALUES (?, ?, ?, ?, ?)`
 
 	data := []interface{}{c.GetMessage(), time.Now(), time.Now(), userId, postId}
 	_, err = db.ExecContext(ctx, q, data...)
