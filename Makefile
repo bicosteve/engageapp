@@ -7,3 +7,7 @@ broker:
 
 post:
 	go run ./cmd/post/main.go
+
+
+comment:
+	go run ./cmd/comment/main.go
